@@ -26,3 +26,19 @@ def median_beat(signal, rpeaks, pre_samples=30, post_samples=70):
     if len(beats) < 2:
         return None
     return np.median(np.vstack(beats), axis=0)
+
+
+def extract_lead_features(beat, pre_samples=30, fs=FS):
+    """Extract the 9 interpretable features from one median beat.
+
+    `beat` is indexed 0..len-1 with the R-peak at index `pre_samples`.
+    """
+    r_idx = pre_samples
+    dt_ms = 1000.0 / fs
+
+    # R amplitude: value at the R-peak sample itself
+    r_amp = beat[r_idx]
+
+    # S amplitude: minimum in a short window after the R-peak (within ~80 ms)
+    s_win_end = min(len(beat), r_idx + int(round(80 / dt_ms)))
+    s_amp = beat[r_idx:s_win_end].min() if s_win_end > r_idx else beat[r_idx]
