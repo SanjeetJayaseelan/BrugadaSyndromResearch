@@ -42,3 +42,18 @@ def extract_lead_features(beat, pre_samples=30, fs=FS):
     # S amplitude: minimum in a short window after the R-peak (within ~80 ms)
     s_win_end = min(len(beat), r_idx + int(round(80 / dt_ms)))
     s_amp = beat[r_idx:s_win_end].min() if s_win_end > r_idx else beat[r_idx]
+
+    # QRS offset / J-point: first point after the R-peak, past the S-wave trough,
+    # where the beat's slope flattens (below a small threshold) for a sustained span.
+    deriv = np.gradient(beat)
+    search_start = int(np.argmin(beat[r_idx:s_win_end])) + r_idx if s_win_end > r_idx else r_idx
+    j_idx = None
+    flat_thresh = 0.02 * (np.max(beat) - np.min(beat) + 1e-9)
+    for i in range(search_start, min(len(beat) - 3, search_start + int(round(120 / dt_ms)))):
+        if np.all(np.abs(deriv[i:i + 3]) < flat_thresh):
+            j_idx = i
+            break
+    if j_idx is None:
+        j_idx = min(len(beat) - 1, search_start + int(round(60 / dt_ms)))
+
+    j_amp = beat[j_idx]
