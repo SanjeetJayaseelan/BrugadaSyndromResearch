@@ -67,3 +67,13 @@ def extract_lead_features(beat, pre_samples=30, fs=FS):
             q_idx = i
             break
     qrs_dur = (j_idx - q_idx) * dt_ms
+
+    # ST amplitudes at J+40ms / J+80ms
+    def amp_at_offset(offset_ms):
+        idx = j_idx + int(round(offset_ms / dt_ms))
+        idx = min(idx, len(beat) - 1)
+        return beat[idx]
+
+    st40 = amp_at_offset(40)
+    st80 = amp_at_offset(80)
+    st_slope = (st80 - st40) / 40.0  # mV/ms over the 40-80ms window
