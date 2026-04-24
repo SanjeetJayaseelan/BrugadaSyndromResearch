@@ -121,5 +121,11 @@ def build_feature_table(npz_path):
                 feats = extract_lead_features(beat, pre)
             for k, v in feats.items():
                 row[f"{lead}_{k}"] = v
+
+        rr = np.diff(rpeaks) * (1000.0 / FS) if len(rpeaks) > 1 else np.array([np.nan])
+        row["HR"] = float(hr_all[s])
+        row["RR_std"] = float(np.std(rr))
+        row["RR_median"] = float(np.median(rr))
+        row["label"] = int(y[s])
         rows.append(row)
     return pd.DataFrame(rows)
