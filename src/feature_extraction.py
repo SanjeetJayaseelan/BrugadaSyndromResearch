@@ -94,3 +94,32 @@ def extract_lead_features(beat, pre_samples=30, fs=FS):
         "R_amp": r_amp, "S_amp": s_amp, "QRS_dur": qrs_dur, "T_amp": t_amp,
         "J_to_R_ratio": j_to_r_ratio,
     }
+
+
+def build_feature_table(npz_path):
+    d = np.load(npz_path, allow_pickle=True)
+    Xf = d["Xf"]              # (n_subjects, 12, 1200) filtered signal
+    leads = list(d["leads"])
+    pids = d["pids"]
+    y = d["y"]
+    rpeaks_all = d["rpeaks"]
+    hr_all = d["hr"]
+
+    pre, post = 30, 70  # -300ms .. +700ms around R-peak at 100Hz
+    rows = []
+    for s in range(Xf.shape[0]):
+        rpeaks = np.asarray(rpeaks_all[s]).astype(int)
+        rpeaks = rpeaks[(rpeaks >= pre) & (rpeaks < Xf.shape[2] - post)]
+        row = {"patient_id": int(pids[s])}
+        for li, lead in enumerate(leads):
+            beat = median_beat(Xf[s, li, :], rpeaks, pre, post)
+            if beat is None:
+                feats = {k: np.nan for k in
+                         ["J_amp", "ST40", "ST80", "ST_slope", "R_amp", "S_amp",
+                          "QRS_dur", "T_amp", "J_to_R_ratio"]}
+            else:
+                feats = extract_lead_features(beat, pre)
+            for k, v in feats.items():
+                row[f"{lead}_{k}"] = v
+        rows.append(row)
+    return pd.DataFrame(rows)
