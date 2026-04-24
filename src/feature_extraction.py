@@ -135,8 +135,19 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--input", default="../data/preprocessed.npz")
     ap.add_argument("--output", default="../data/features_reproduced.csv")
+    ap.add_argument("--validate-against", default=None,
+                     help="Optional path to the original features.csv for a sanity-check correlation report.")
     args = ap.parse_args()
 
     df = build_feature_table(args.input)
     df.to_csv(args.output, index=False)
     print(f"Wrote {len(df)} rows x {len(df.columns)} columns to {args.output}")
+
+    if args.validate_against:
+        orig = pd.read_csv(args.validate_against)
+        merged = df.merge(orig, on="patient_id", suffixes=("_repro", "_orig"))
+        for col in ["V2_ST40", "V1_ST40", "V2_J_amp"]:
+            a, b = col + "_repro", col + "_orig"
+            if a in merged and b in merged:
+                corr = merged[a].corr(merged[b])
+                print(f"  {col}: correlation vs. original = {corr:.3f}")
