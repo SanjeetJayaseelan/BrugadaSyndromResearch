@@ -129,3 +129,14 @@ def build_feature_table(npz_path):
         row["label"] = int(y[s])
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--input", default="../data/preprocessed.npz")
+    ap.add_argument("--output", default="../data/features_reproduced.csv")
+    args = ap.parse_args()
+
+    df = build_feature_table(args.input)
+    df.to_csv(args.output, index=False)
+    print(f"Wrote {len(df)} rows x {len(df.columns)} columns to {args.output}")
