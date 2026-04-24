@@ -77,3 +77,20 @@ def extract_lead_features(beat, pre_samples=30, fs=FS):
     st40 = amp_at_offset(40)
     st80 = amp_at_offset(80)
     st_slope = (st80 - st40) / 40.0  # mV/ms over the 40-80ms window
+
+    # T-wave amplitude: signed peak-magnitude in a search window ~120-320ms post J-point
+    t_start = j_idx + int(round(60 / dt_ms))
+    t_end = min(len(beat), j_idx + int(round(280 / dt_ms)))
+    if t_end > t_start:
+        seg = beat[t_start:t_end]
+        t_amp = seg[np.argmax(np.abs(seg))]
+    else:
+        t_amp = np.nan
+
+    j_to_r_ratio = j_amp / r_amp if abs(r_amp) > 1e-6 else np.nan
+
+    return {
+        "J_amp": j_amp, "ST40": st40, "ST80": st80, "ST_slope": st_slope,
+        "R_amp": r_amp, "S_amp": s_amp, "QRS_dur": qrs_dur, "T_amp": t_amp,
+        "J_to_R_ratio": j_to_r_ratio,
+    }
