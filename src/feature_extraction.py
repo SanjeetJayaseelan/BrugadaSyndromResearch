@@ -60,7 +60,7 @@ def extract_lead_features(beat, pre_samples=30, fs=FS):
 
     # QRS onset: last point before the R-peak where the beat departs from baseline
     q_idx = r_idx
-    baseline = np.median(beat[:max(1, pre_samples - 15)])
+    baseline = np.median(beat[:max(1, pre_samples - 15)]) if pre_samples > 15 else beat[0]
     dep_thresh = 0.05 * (np.max(beat) - np.min(beat) + 1e-9)
     for i in range(r_idx, 0, -1):
         if abs(beat[i] - baseline) < dep_thresh:
