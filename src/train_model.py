@@ -43,3 +43,12 @@ def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
         fpr, tpr, _ = roc_curve(y[te], p)
         aurocs.append(auc(fpr, tpr))
         auprcs.append(average_precision_score(y[te], p))
+
+        pred = (p >= 0.5).astype(int)
+        tp = ((pred == 1) & (y[te] == 1)).sum()
+        fn = ((pred == 0) & (y[te] == 1)).sum()
+        tn = ((pred == 0) & (y[te] == 0)).sum()
+        fp = ((pred == 1) & (y[te] == 0)).sum()
+        senss.append(tp / (tp + fn) if (tp + fn) else np.nan)
+        specs.append(tn / (tn + fp) if (tn + fp) else np.nan)
+        accs.append((tp + tn) / len(te))
