@@ -52,3 +52,18 @@ def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
         senss.append(tp / (tp + fn) if (tp + fn) else np.nan)
         specs.append(tn / (tn + fp) if (tn + fp) else np.nan)
         accs.append((tp + tn) / len(te))
+
+        # sensitivity at fixed 90% specificity
+        thresholds = np.linspace(0, 1, 500)
+        best = 0.0
+        for t in thresholds:
+            pr = (p >= t).astype(int)
+            tn_ = ((pr == 0) & (y[te] == 0)).sum()
+            fp_ = ((pr == 1) & (y[te] == 0)).sum()
+            spec_t = tn_ / (tn_ + fp_) if (tn_ + fp_) else 0
+            if spec_t >= 0.90:
+                tp_ = ((pr == 1) & (y[te] == 1)).sum()
+                fn_ = ((pr == 0) & (y[te] == 1)).sum()
+                sens_t = tp_ / (tp_ + fn_) if (tp_ + fn_) else 0
+                best = max(best, sens_t)
+        sens90.append(best)
