@@ -39,3 +39,7 @@ def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
         p = model.predict_proba(X[te])[:, 1]
         oof_sum[te] += p
         oof_cnt[te] += 1
+
+        fpr, tpr, _ = roc_curve(y[te], p)
+        aurocs.append(auc(fpr, tpr))
+        auprcs.append(average_precision_score(y[te], p))
