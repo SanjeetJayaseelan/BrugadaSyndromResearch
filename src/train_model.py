@@ -67,3 +67,16 @@ def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
                 sens_t = tp_ / (tp_ + fn_) if (tp_ + fn_) else 0
                 best = max(best, sens_t)
         sens90.append(best)
+
+
+    def summarize(arr):
+        arr = np.array(arr)
+        return arr.mean(), arr.std(), np.percentile(arr, 2.5), np.percentile(arr, 97.5)
+
+    metrics = {}
+    for name, arr in [("auroc", aurocs), ("auprc", auprcs), ("sens", senss),
+                       ("spec", specs), ("sens_at_90spec", sens90), ("acc", accs)]:
+        mean, std, lo, hi = summarize(arr)
+        metrics[name] = {"mean": mean, "std": std, "ci_lo": lo, "ci_hi": hi}
+
+    return metrics, oof_sum / np.maximum(oof_cnt, 1)
