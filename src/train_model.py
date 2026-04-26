@@ -80,3 +80,14 @@ def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
         metrics[name] = {"mean": mean, "std": std, "ci_lo": lo, "ci_hi": hi}
 
     return metrics, oof_sum / np.maximum(oof_cnt, 1)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--features", default="../data/features.csv")
+    ap.add_argument("--out", default="../data/cv_metrics_reproduced.csv")
+    args = ap.parse_args()
+
+    feat = pd.read_csv(args.features)
+    X = feat.drop(columns=["patient_id", "label", "brugada_code"], errors="ignore").values
+    y = feat["label"].values
