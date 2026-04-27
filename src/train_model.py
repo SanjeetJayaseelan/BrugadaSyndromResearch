@@ -91,3 +91,21 @@ def main():
     feat = pd.read_csv(args.features)
     X = feat.drop(columns=["patient_id", "label", "brugada_code"], errors="ignore").values
     y = feat["label"].values
+
+    rows = []
+    for model_name in ["xgboost", "random_forest"]:
+        print(f"Running repeated stratified 5x10-fold CV for {model_name}...")
+        metrics, oof = run_cv(X, y, model_name)
+        for stat in ["mean", "std", "ci_lo", "ci_hi"]:
+            rows.append({"model": model_name, "stat": stat,
+                          **{m: metrics[m][stat] for m in metrics}})
+        print(f"  AUROC = {metrics[\'auroc\'][\'mean\']:.3f} "
+              f"[{metrics[\'auroc\'][\'ci_lo\']:.2f}, {metrics[\'auroc\'][\'ci_hi\']:.2f}]")
+
+    out_df = pd.DataFrame(rows)
+    out_df.to_csv(args.out, index=False)
+    print(f"Wrote cross-validated metrics to {args.out}")
+
+
+if __name__ == "__main__":
+    main()
