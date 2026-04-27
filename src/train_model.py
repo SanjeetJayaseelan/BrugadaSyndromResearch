@@ -1,11 +1,16 @@
 """
 train_model.py
 
-Trains and cross-validates the BrS classifier: XGBoost (primary) and Random Forest
-(comparator), validated with repeated stratified 5-fold CV (10 repeats, 50 folds).
+Trains and cross-validates the BrS classifier described in the paper:
+  - XGBoost (primary): 300 trees, max_depth=3, lr=0.05, scale_pos_weight for imbalance
+  - Random Forest (comparator): class_weight='balanced'
+  - Validation: repeated stratified 5-fold CV, 10 repeats (50 folds total)
 
 Because Brugada-HUCA has exactly one ECG per patient, every CV split here is
 automatically patient-level and leakage-free.
+
+Usage:
+    python train_model.py --features ../data/features.csv --out ../data/cv_metrics_reproduced.csv
 """
 import argparse
 import numpy as np
@@ -20,6 +25,7 @@ def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
     rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
     n_pos, n_neg = y.sum(), len(y) - y.sum()
     spw = n_neg / n_pos
+
     aurocs, auprcs, senss, specs, sens90, accs = [], [], [], [], [], []
     oof_sum, oof_cnt = np.zeros(len(y)), np.zeros(len(y))
 
@@ -68,7 +74,6 @@ def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
                 best = max(best, sens_t)
         sens90.append(best)
 
-
     def summarize(arr):
         arr = np.array(arr)
         return arr.mean(), arr.std(), np.percentile(arr, 2.5), np.percentile(arr, 97.5)
@@ -99,8 +104,8 @@ def main():
         for stat in ["mean", "std", "ci_lo", "ci_hi"]:
             rows.append({"model": model_name, "stat": stat,
                           **{m: metrics[m][stat] for m in metrics}})
-        print(f"  AUROC = {metrics[\'auroc\'][\'mean\']:.3f} "
-              f"[{metrics[\'auroc\'][\'ci_lo\']:.2f}, {metrics[\'auroc\'][\'ci_hi\']:.2f}]")
+        print(f"  AUROC = {metrics['auroc']['mean']:.3f} "
+              f"[{metrics['auroc']['ci_lo']:.2f}, {metrics['auroc']['ci_hi']:.2f}]")
 
     out_df = pd.DataFrame(rows)
     out_df.to_csv(args.out, index=False)
