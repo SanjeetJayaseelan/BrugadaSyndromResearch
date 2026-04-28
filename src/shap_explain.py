@@ -24,3 +24,9 @@ def main():
     y = feat["label"].values
     feature_names = X.columns.tolist()
     Xv = X.values
+
+    n_pos, n_neg = y.sum(), len(y) - y.sum()
+    model = xgb.XGBClassifier(n_estimators=300, max_depth=3, learning_rate=0.05,
+                               scale_pos_weight=n_neg / n_pos, eval_metric="logloss",
+                               subsample=0.9, colsample_bytree=0.9, random_state=0, n_jobs=2)
+    model.fit(Xv, y)
