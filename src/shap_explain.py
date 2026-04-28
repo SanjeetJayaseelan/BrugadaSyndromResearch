@@ -2,8 +2,12 @@
 shap_explain.py
 
 Fits the primary XGBoost model on the full feature table and computes SHAP
-attribution, to check the model relies on the clinically expected
-right-precordial ST/J-point signal rather than an incidental artifact.
+(SHapley Additive exPlanations) attribution, to check that the model relies on
+the clinically expected right-precordial ST/J-point signal rather than an
+incidental artifact.
+
+Usage:
+    python shap_explain.py --features ../data/features.csv --out-dir ../data/
 """
 import argparse
 import numpy as np
@@ -33,7 +37,7 @@ def main():
 
     explainer = shap.TreeExplainer(model)
     shap_values = np.array(explainer.shap_values(Xv))
-    if shap_values.ndim == 3:
+    if shap_values.ndim == 3:  # some shap/xgboost version combos return (n, features, classes)
         shap_values = shap_values[:, :, 1]
 
     mean_abs = np.abs(shap_values).mean(axis=0)
