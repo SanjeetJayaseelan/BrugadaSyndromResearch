@@ -30,3 +30,8 @@ def main():
                                scale_pos_weight=n_neg / n_pos, eval_metric="logloss",
                                subsample=0.9, colsample_bytree=0.9, random_state=0, n_jobs=2)
     model.fit(Xv, y)
+
+    explainer = shap.TreeExplainer(model)
+    shap_values = np.array(explainer.shap_values(Xv))
+    if shap_values.ndim == 3:
+        shap_values = shap_values[:, :, 1]
