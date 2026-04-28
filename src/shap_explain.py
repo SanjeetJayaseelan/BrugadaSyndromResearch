@@ -35,3 +35,19 @@ def main():
     shap_values = np.array(explainer.shap_values(Xv))
     if shap_values.ndim == 3:
         shap_values = shap_values[:, :, 1]
+
+    mean_abs = np.abs(shap_values).mean(axis=0)
+    order = np.argsort(mean_abs)[::-1][: args.top_n]
+    top = pd.DataFrame({
+        "feature": [feature_names[i] for i in order],
+        "mean_abs_shap": [mean_abs[i] for i in order],
+    })
+    print("Top features by mean |SHAP|:")
+    print(top.to_string(index=False))
+
+    np.save(args.out_dir + "shap_values.npy", shap_values)
+    top.to_csv(args.out_dir + "shap_top_features.csv", index=False)
+
+
+if __name__ == "__main__":
+    main()
