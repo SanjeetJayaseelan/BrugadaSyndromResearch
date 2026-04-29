@@ -51,3 +51,42 @@ def fig1_waveforms(data_dir, out_dir, brs_pid=188981, ctrl_pid=251972):
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.savefig(f"{out_dir}/fig1_example_waveforms.png", dpi=180)
     plt.close(fig)
+
+def fig2_preprocessing_qc(data_dir, out_dir, brs_pid=188981, ctrl_pid=251972):
+    raw = np.load(f"{data_dir}/brugada_raw.npz", allow_pickle=True)
+    pre = np.load(f"{data_dir}/preprocessed.npz", allow_pickle=True)
+    leads = list(raw["leads"]); pids = raw["pids"]; fs = 100.0
+    X, Xf, rpeaks = raw["X"], pre["Xf"], pre["rpeaks"]
+    t = np.arange(X.shape[2]) / fs
+    brs_idx = int(np.where(pids == brs_pid)[0][0])
+    ctl_idx = int(np.where(pids == ctrl_pid)[0][0])
+    li_v2, li_ii = leads.index("V2"), leads.index("II")
+
+    fig, axs = plt.subplots(3, 2, figsize=(12, 9.5))
+    fig.suptitle("Preprocessing QC: bandpass filtering and R-peak detection", fontsize=13)
+    for c, (idx, title) in enumerate([(brs_idx, f"BrS (pid {brs_pid}) — lead V2"),
+                                       (ctl_idx, f"Control (pid {ctrl_pid}) — lead V2")]):
+        axs[0, c].plot(t, X[idx, li_v2, :], color="gray", lw=0.9, label="raw")
+        axs[0, c].plot(t, Xf[idx, li_v2, :], color="#c1440e", lw=1.1, label="filtered")
+        axs[0, c].set_title(title); axs[0, c].set_ylabel("V2 (mV)")
+        if c == 0:
+            axs[0, c].legend(loc="upper right", frameon=False, fontsize=8)
+
+        removed = X[idx, li_v2, :] - Xf[idx, li_v2, :]
+        axs[1, c].plot(t, removed, color="#2b6cb0", lw=1)
+        axs[1, c].set_ylabel("removed\n(baseline+HF)")
+
+        sig = Xf[idx, li_ii, :]
+        axs[2, c].plot(t, sig, color="#33475b", lw=0.9)
+        rp = np.asarray(rpeaks[idx]).astype(int)
+        rp = rp[(rp >= 0) & (rp < len(sig))]
+        axs[2, c].scatter(t[rp], sig[rp], marker="v", color="#e07b00", s=45, zorder=5)
+        axs[2, c].set_ylabel("II + R-peaks"); axs[2, c].set_xlabel("Time (s)")
+
+        for r in range(3):
+            axs[r, c].spines["top"].set_visible(False)
+            axs[r, c].spines["right"].set_visible(False)
+
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.savefig(f"{out_dir}/fig2_preprocessing_qc.png", dpi=180)
+    plt.close(fig)
