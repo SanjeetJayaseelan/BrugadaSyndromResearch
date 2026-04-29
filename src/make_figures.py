@@ -23,3 +23,31 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
+
+
+def fig1_waveforms(data_dir, out_dir, brs_pid=188981, ctrl_pid=251972):
+    raw = np.load(f"{data_dir}/brugada_raw.npz", allow_pickle=True)
+    leads = list(raw["leads"]); pids = raw["pids"]; X = raw["X"]
+    fs = 100.0
+    t = np.arange(X.shape[2]) / fs
+    brs_idx = int(np.where(pids == brs_pid)[0][0])
+    ctl_idx = int(np.where(pids == ctrl_pid)[0][0])
+    show_leads = ["V1", "V2", "V3", "II"]
+
+    fig, axs = plt.subplots(len(show_leads), 2, figsize=(11, 9), sharex=True)
+    fig.suptitle("Right-precordial leads: Brugada type-1 vs control", fontsize=13)
+    for r, ld in enumerate(show_leads):
+        li = leads.index(ld)
+        axs[r, 0].plot(t, X[brs_idx, li, :], color="#c1440e", lw=1)
+        axs[r, 1].plot(t, X[ctl_idx, li, :], color="#33475b", lw=1)
+        for c in (0, 1):
+            axs[r, c].axhline(0, color="gray", lw=0.6)
+            axs[r, c].spines["top"].set_visible(False)
+            axs[r, c].spines["right"].set_visible(False)
+        axs[r, 0].set_ylabel(ld)
+    axs[0, 0].set_title(f"BrS type-1 (pid {brs_pid})")
+    axs[0, 1].set_title(f"Control (pid {ctrl_pid})")
+    axs[-1, 0].set_xlabel("Time (s)"); axs[-1, 1].set_xlabel("Time (s)")
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
+    plt.savefig(f"{out_dir}/fig1_example_waveforms.png", dpi=180)
+    plt.close(fig)
