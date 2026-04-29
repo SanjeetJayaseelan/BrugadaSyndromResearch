@@ -90,3 +90,40 @@ def fig2_preprocessing_qc(data_dir, out_dir, brs_pid=188981, ctrl_pid=251972):
     plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.savefig(f"{out_dir}/fig2_preprocessing_qc.png", dpi=180)
     plt.close(fig)
+
+def fig3_feature_distributions(data_dir, out_dir):
+    feat = pd.read_csv(f"{data_dir}/features.csv")
+    eff = pd.read_csv(f"{data_dir}/feature_effect_sizes.csv").set_index("feature")
+    top6 = ["V2_ST40", "V1_ST40", "V4_QRS_dur", "V3_QRS_dur", "V2_QRS_dur", "V2_T_amp"]
+    units = {"V2_ST40": "mV", "V1_ST40": "mV", "V4_QRS_dur": "ms", "V3_QRS_dur": "ms",
+             "V2_QRS_dur": "ms", "V2_T_amp": "mV"}
+    titles = {"V2_ST40": "V2 ST (J+40ms)", "V1_ST40": "V1 ST (J+40ms)",
+              "V4_QRS_dur": "V4 QRS duration", "V3_QRS_dur": "V3 QRS duration",
+              "V2_QRS_dur": "V2 QRS duration", "V2_T_amp": "V2 T-wave amplitude"}
+    ctrl, brs = feat[feat.label == 0], feat[feat.label == 1]
+    rng = np.random.default_rng(7)
+
+    fig, axs = plt.subplots(2, 3, figsize=(13, 8.5))
+    fig.suptitle("Top discriminating features: BrS vs control (right-precordial signature)", fontsize=13)
+    axs = axs.ravel()
+    for i, f in enumerate(top6):
+        ax = axs[i]; d = eff.loc[f, "cohens_d"]
+        data = [ctrl[f].dropna().values, brs[f].dropna().values]
+        parts = ax.violinplot(data, showextrema=True)
+        for pc, col in zip(parts["bodies"], ["#8fa3b3", "#e5a29a"]):
+            pc.set_facecolor(col); pc.set_alpha(0.55); pc.set_edgecolor("none")
+        for key in ("cbars", "cmins", "cmaxes"):
+            parts[key].set_color("gray"); parts[key].set_linewidth(1)
+        for gi, arr in enumerate(data, start=1):
+            q1, med, q3 = np.percentile(arr, [25, 50, 75])
+            ax.hlines([q1, med, q3], gi - 0.18, gi + 0.18, color="dimgray", lw=1)
+        for gi, (arr, col) in enumerate(zip(data, ["#33475b", "#c1440e"]), start=1):
+            x = gi + rng.normal(0, 0.045, size=len(arr))
+            ax.scatter(x, arr, s=6, color=col, alpha=0.45, linewidths=0)
+        ax.set_xticks([1, 2]); ax.set_xticklabels(["Control", "BrS"])
+        ax.set_title(f"{titles[f]}  (d={'+' if d >= 0 else ''}{d:.2f})", fontsize=10.5)
+        ax.set_ylabel(units[f])
+        ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.savefig(f"{out_dir}/fig3_feature_distributions.png", dpi=180)
+    plt.close(fig)
