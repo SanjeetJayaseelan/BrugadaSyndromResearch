@@ -127,3 +127,60 @@ def fig3_feature_distributions(data_dir, out_dir):
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig(f"{out_dir}/fig3_feature_distributions.png", dpi=180)
     plt.close(fig)
+
+def fig4_error_analysis(data_dir, out_dir):
+    feat = pd.read_csv(f"{data_dir}/features.csv")
+    recs = pd.read_csv(f"{data_dir}/records.csv")[["patient_id", "basal_pattern", "brs_type"]]
+    err = pd.read_csv(f"{data_dir}/error_analysis.csv")
+    fn_ids, fp_ids = set(err.loc[err.error == "FN", "patient_id"]), set(err.loc[err.error == "FP", "patient_id"])
+    feat = feat.merge(recs, on="patient_id", how="left")
+
+    def outcome(row):
+        if row.label == 1:
+            return "FN" if row.patient_id in fn_ids else "TP"
+        return "FP" if row.patient_id in fp_ids else "TN"
+    feat["outcome"] = feat.apply(outcome, axis=1)
+    brs = feat[feat.label == 1].copy()
+
+    def sens(df):
+        return (df.outcome == "TP").sum(), len(df)
+
+    groups = [("Concealed\nbaseline", *sens(brs[brs.basal_pattern == 0])),
+              ("Overt\nbaseline", *sens(brs[brs.basal_pattern == 1])),
+              ("Type-1", *sens(brs[brs.brs_type == "type1"])),
+              ("Type-2", *sens(brs[brs.brs_type == "type2"]))]
+    overall_sens = 100 * (brs.outcome == "TP").sum() / len(brs)
+
+    fig, axs = plt.subplots(1, 2, figsize=(13, 5.5))
+    colors = ["#c1440e", "#e07b00", "#7f8c8d", "#7f8c8d"]
+    labels = [g[0] for g in groups]; vals = [100 * g[1] / g[2] for g in groups]
+    bars = axs[0].bar(labels, vals, color=colors, width=0.62)
+    for b, g in zip(bars, groups):
+        axs[0].text(b.get_x() + b.get_width() / 2, b.get_height() + 1.5, f"{g[1]}/{g[2]}", ha="center", fontsize=10)
+    axs[0].axhline(overall_sens, color="gray", ls="--", lw=1)
+    axs[0].set_ylabel("Sensitivity (%)"); axs[0].set_ylim(0, 100)
+    axs[0].set_title("BrS detection by subgroup — concealed cases missed most")
+    axs[0].spines["top"].set_visible(False); axs[0].spines["right"].set_visible(False)
+
+    data = [feat.loc[feat.outcome == "TN", "V2_ST40"].values,
+            feat.loc[feat.outcome == "FN", "V2_ST40"].values,
+            feat.loc[feat.outcome == "TP", "V2_ST40"].values]
+    rng = np.random.default_rng(3)
+    parts = axs[1].violinplot(data, showextrema=True)
+    for pc, col in zip(parts["bodies"], ["#8fa3b3", "#e5a29a", "#9fd0ae"]):
+        pc.set_facecolor(col); pc.set_alpha(0.55); pc.set_edgecolor("none")
+    for key in ("cbars", "cmins", "cmaxes"):
+        parts[key].set_color("gray"); parts[key].set_linewidth(1)
+    for gi, arr in enumerate(data, start=1):
+        q1, med, q3 = np.percentile(arr, [25, 50, 75])
+        axs[1].hlines([q1, med, q3], gi - 0.18, gi + 0.18, color="dimgray", lw=1)
+    for gi, (arr, col) in enumerate(zip(data, ["#33475b", "#c1440e", "#1a7a3c"]), start=1):
+        x = gi + rng.normal(0, 0.05, size=len(arr))
+        axs[1].scatter(x, arr, s=8, color=col, alpha=0.5, linewidths=0)
+    axs[1].set_xticks([1, 2, 3]); axs[1].set_xticklabels(["Controls", "Missed BrS\n(FN)", "Caught BrS\n(TP)"])
+    axs[1].set_ylabel("V2 ST amplitude (mV)")
+    axs[1].set_title("Missed BrS have intermediate V2 ST elevation")
+    axs[1].spines["top"].set_visible(False); axs[1].spines["right"].set_visible(False)
+    plt.tight_layout()
+    plt.savefig(f"{out_dir}/fig4_error_analysis.png", dpi=180)
+    plt.close(fig)
