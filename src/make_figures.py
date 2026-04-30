@@ -308,3 +308,23 @@ def fig6_shap_confusion(data_dir, out_dir, confusion=(272, 15, 24, 52)):
     plt.tight_layout()
     plt.savefig(f"{out_dir}/fig6_shap_confusion.png", dpi=180)
     plt.close(fig)
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--data-dir", default="../data")
+    ap.add_argument("--out-dir", default="../figures")
+    args = ap.parse_args()
+
+    fig1_waveforms(args.data_dir, args.out_dir)
+    print("fig1 done")
+    fig2_preprocessing_qc(args.data_dir, args.out_dir)
+    print("fig2 done")
+    fig3_feature_distributions(args.data_dir, args.out_dir)
+    print("fig3 done")
+    fig4_error_analysis(args.data_dir, args.out_dir)
+    print("fig4 done")
+    fig5_roc_pr_calibration(args.data_dir, args.out_dir)
+    print("fig5 done")
+    fig6_shap_confusion(args.data_dir, args.out_dir)
+    print("fig6 done")
