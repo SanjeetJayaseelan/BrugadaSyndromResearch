@@ -247,3 +247,64 @@ def fig5_roc_pr_calibration(data_dir, out_dir):
     plt.savefig(f"{out_dir}/fig5_roc_pr_calibration.png", dpi=180)
     plt.close(fig)
     return mean_auc, mean_ap
+
+def fig6_shap_confusion(data_dir, out_dir, confusion=(272, 15, 24, 52)):
+    """confusion = (TN, FP, FN, TP), taken from data/error_analysis.csv."""
+    import xgboost as xgb
+    import shap
+
+    feat = pd.read_csv(f"{data_dir}/features.csv")
+    X = feat.drop(columns=["patient_id", "label", "brugada_code"])
+    y = feat["label"].values
+    feature_names = X.columns.tolist()
+    Xv = X.values
+    spw = (len(y) - y.sum()) / y.sum()
+
+    model = xgb.XGBClassifier(n_estimators=300, max_depth=3, learning_rate=0.05,
+                               scale_pos_weight=spw, eval_metric="logloss",
+                               subsample=0.9, colsample_bytree=0.9, random_state=0, n_jobs=2)
+    model.fit(Xv, y)
+    sv = np.array(shap.TreeExplainer(model).shap_values(Xv))
+    if sv.ndim == 3:
+        sv = sv[:, :, 1]
+    mean_abs = np.abs(sv).mean(axis=0)
+    order = np.argsort(mean_abs)[::-1][:10]
+    red_leads = ("V1_", "V2_", "V3_")
+
+    fig = plt.figure(figsize=(15, 5.2))
+    gs = fig.add_gridspec(1, 3, width_ratios=[1.3, 1, 1])
+    ax0 = fig.add_subplot(gs[0])
+    rng = np.random.default_rng(1)
+    for row, i in enumerate(order[::-1]):
+        vals, fvals = sv[:, i], Xv[:, i]
+        ranks = np.argsort(np.argsort(fvals)) / max(len(fvals) - 1, 1)
+        y_jitter = row + rng.normal(0, 0.12, size=len(vals))
+        ax0.scatter(vals, y_jitter, c=ranks, cmap="cool", s=9, alpha=0.75, linewidths=0)
+    ax0.axvline(0, color="gray", lw=0.8)
+    ax0.set_yticks(range(len(order))); ax0.set_yticklabels([feature_names[i] for i in order[::-1]])
+    ax0.set_xlabel("SHAP value (impact on model output)"); ax0.set_title("SHAP feature attribution (XGBoost)")
+
+    ax1 = fig.add_subplot(gs[1])
+    colors = ["#c1440e" if any(feature_names[i].startswith(p) for p in red_leads) else "#8fa3b3" for i in order]
+    ax1.barh(range(len(order)), [mean_abs[i] for i in order][::-1], color=colors[::-1])
+    ax1.set_yticks(range(len(order))); ax1.set_yticklabels([feature_names[i] for i in order[::-1]])
+    ax1.set_xlabel("mean |SHAP|"); ax1.set_title("Top-10 importance (red = V1–V3)")
+
+    ax2 = fig.add_subplot(gs[2])
+    tn, fp, fn, tp = confusion
+    cm = np.array([[tn, fp], [fn, tp]])
+    ax2.imshow(cm, cmap="Blues")
+    ax2.set_xticks([0, 1]); ax2.set_xticklabels(["Control", "BrS"])
+    ax2.set_yticks([0, 1]); ax2.set_yticklabels(["Control", "BrS"])
+    ax2.set_xlabel("Predicted"); ax2.set_ylabel("True")
+    ax2.set_title("Confusion matrix (out-of-fold, thr=0.5)")
+    for i in range(2):
+        for j in range(2):
+            ax2.text(j, i, str(cm[i, j]), ha="center", va="center",
+                      color="white" if cm[i, j] > 150 else "black", fontsize=13)
+
+    for ax in (ax0, ax1):
+        ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
+    plt.tight_layout()
+    plt.savefig(f"{out_dir}/fig6_shap_confusion.png", dpi=180)
+    plt.close(fig)
