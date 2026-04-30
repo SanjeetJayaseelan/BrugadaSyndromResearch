@@ -184,3 +184,66 @@ def fig4_error_analysis(data_dir, out_dir):
     plt.tight_layout()
     plt.savefig(f"{out_dir}/fig4_error_analysis.png", dpi=180)
     plt.close(fig)
+
+def fig5_roc_pr_calibration(data_dir, out_dir):
+    from sklearn.model_selection import RepeatedStratifiedKFold
+    from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
+    from sklearn.calibration import calibration_curve
+    import xgboost as xgb
+
+    feat = pd.read_csv(f"{data_dir}/features.csv")
+    X = feat.drop(columns=["patient_id", "label", "brugada_code"]).values
+    y = feat["label"].values
+    spw = (len(y) - y.sum()) / y.sum()
+
+    rskf = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=42)
+    mean_fpr, mean_rec = np.linspace(0, 1, 200), np.linspace(0, 1, 200)
+    fold_tprs, fold_precs, fold_aucs, fold_aps = [], [], [], []
+    oof_sum, oof_cnt = np.zeros(len(y)), np.zeros(len(y))
+
+    for tr, te in rskf.split(X, y):
+        model = xgb.XGBClassifier(n_estimators=300, max_depth=3, learning_rate=0.05,
+                                   scale_pos_weight=spw, eval_metric="logloss",
+                                   subsample=0.9, colsample_bytree=0.9, random_state=0, n_jobs=2)
+        model.fit(X[tr], y[tr])
+        p = model.predict_proba(X[te])[:, 1]
+        oof_sum[te] += p; oof_cnt[te] += 1
+        fpr, tpr, _ = roc_curve(y[te], p)
+        fold_aucs.append(auc(fpr, tpr)); fold_tprs.append(np.interp(mean_fpr, fpr, tpr))
+        prec, rec, _ = precision_recall_curve(y[te], p)
+        fold_aps.append(average_precision_score(y[te], p))
+        order = np.argsort(rec)
+        fold_precs.append(np.interp(mean_rec, rec[order], prec[order]))
+
+    oof = oof_sum / np.maximum(oof_cnt, 1)
+    fold_tprs, fold_precs = np.array(fold_tprs), np.array(fold_precs)
+    mean_tpr = fold_tprs.mean(0); lo_tpr, hi_tpr = np.percentile(fold_tprs, [2.5, 97.5], axis=0)
+    mean_prec = fold_precs.mean(0); lo_prec, hi_prec = np.percentile(fold_precs, [2.5, 97.5], axis=0)
+    mean_auc, mean_ap = np.mean(fold_aucs), np.mean(fold_aps)
+    frac_pos, mean_pred = calibration_curve(y, oof, n_bins=8, strategy="quantile")
+
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4.6))
+    axs[0].plot(mean_fpr, mean_tpr, color="#c1440e", lw=2, label=f"XGBoost (AUROC {mean_auc:.2f})")
+    axs[0].fill_between(mean_fpr, lo_tpr, hi_tpr, color="#c1440e", alpha=0.15)
+    axs[0].plot([0, 1], [0, 1], color="gray", ls="--", lw=1)
+    axs[0].set_xlabel("1 − Specificity"); axs[0].set_ylabel("Sensitivity")
+    axs[0].set_title("ROC (50 folds, 95% band)"); axs[0].legend(loc="lower right", frameon=False, fontsize=9)
+
+    prevalence = y.mean()
+    axs[1].plot(mean_rec, mean_prec, color="#c1440e", lw=2, label=f"XGBoost (AUPRC {mean_ap:.2f})")
+    axs[1].fill_between(mean_rec, lo_prec, hi_prec, color="#c1440e", alpha=0.15)
+    axs[1].axhline(prevalence, color="gray", ls="--", lw=1, label=f"prevalence ({prevalence:.2f})")
+    axs[1].set_xlabel("Recall (Sensitivity)"); axs[1].set_ylabel("Precision")
+    axs[1].set_title("Precision–Recall"); axs[1].legend(loc="upper right", frameon=False, fontsize=9)
+
+    axs[2].plot(mean_pred, frac_pos, marker="o", color="#c1440e", label="XGBoost")
+    axs[2].plot([0, 1], [0, 1], color="gray", ls="--", lw=1)
+    axs[2].set_xlabel("Predicted probability"); axs[2].set_ylabel("Observed frequency")
+    axs[2].set_title("Calibration (out-of-fold)"); axs[2].legend(loc="upper left", frameon=False, fontsize=9)
+
+    for ax in axs:
+        ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
+    plt.tight_layout()
+    plt.savefig(f"{out_dir}/fig5_roc_pr_calibration.png", dpi=180)
+    plt.close(fig)
+    return mean_auc, mean_ap
