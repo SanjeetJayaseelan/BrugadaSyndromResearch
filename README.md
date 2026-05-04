@@ -24,3 +24,12 @@ data/                     feature tables, CV metrics, error analysis, raw checkp
 figures/                  generated PNGs
 paper/                    the manuscript PDF
 ```
+
+## Method summary
+
+1. Band-pass filter each lead (0.5-40Hz) and detect R-peaks.
+2. Build a robust per-lead **median beat** (align on R-peak, take per-sample median).
+3. Extract 9 features per lead (J-point, ST40/ST80, ST slope, R/S amplitude, QRS duration, T amplitude, J-to-R ratio) x 12 leads + 3 rhythm features = **111 features**.
+4. Screen features with Cohen's *d* / Mann-Whitney U (Bonferroni-corrected) before modeling.
+5. Train XGBoost (primary) and Random Forest (comparator) under **repeated stratified 5-fold CV, 10 repeats (50 folds)** — patient-level and leakage-free by construction.
+6. Explain the fitted model with SHAP; tie errors to the `basal_pattern` clinical flag.
