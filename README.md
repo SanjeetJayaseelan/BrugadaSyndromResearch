@@ -11,3 +11,16 @@ Brugada syndrome is an inherited channelopathy that can cause sudden cardiac dea
 ## Dataset
 
 [Brugada-HUCA](https://physionet.org), PhysioNet v1.0.0 (Feb 2026) — 363 subjects (76 BrS, 287 controls), 12-lead ECG at 100 Hz, one record per patient.
+
+## Repository structure
+
+```
+src/
+  feature_extraction.py   raw/preprocessed ECG -> 111-feature table
+  train_model.py          repeated stratified CV: XGBoost + Random Forest
+  shap_explain.py         SHAP attribution on the final fitted model
+  make_figures.py         regenerates every figure in the paper
+data/                     feature tables, CV metrics, error analysis, raw checkpoints
+figures/                  generated PNGs
+paper/                    the manuscript PDF
+```
