@@ -43,3 +43,7 @@ paper/                    the manuscript PDF
 | Sensitivity @ 90% specificity | **0.763** | 0.751 |
 
 SHAP attribution's top-3 features (V2 ST, V1 ST, V2 J-point amplitude) match the univariate effect-size screen almost exactly, and 5 of the top 10 SHAP features are in leads V1-V3.
+
+## Error analysis
+
+Sensitivity is **62% (33/53)** when the patient's baseline ECG is non-pathological vs. **83% (19/23)** when it is overtly abnormal. Missed BrS cases sit at an intermediate V2 ST amplitude (0.174 mV) between controls (0.119 mV) and correctly caught cases (0.252 mV) — the model's failures concentrate on the same concealed phenotype that motivates sodium-channel-blocker provocation testing in clinical practice.
