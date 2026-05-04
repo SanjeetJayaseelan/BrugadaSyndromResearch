@@ -33,3 +33,13 @@ paper/                    the manuscript PDF
 4. Screen features with Cohen's *d* / Mann-Whitney U (Bonferroni-corrected) before modeling.
 5. Train XGBoost (primary) and Random Forest (comparator) under **repeated stratified 5-fold CV, 10 repeats (50 folds)** — patient-level and leakage-free by construction.
 6. Explain the fitted model with SHAP; tie errors to the `basal_pattern` clinical flag.
+
+## Results
+
+| Metric | XGBoost | Random Forest |
+|---|---|---|
+| AUROC | 0.900 [0.80, 0.97] | 0.910 [0.84, 0.97] |
+| AUPRC | 0.777 [0.57, 0.92] | 0.789 [0.64, 0.91] |
+| Sensitivity @ 90% specificity | **0.763** | 0.751 |
+
+SHAP attribution's top-3 features (V2 ST, V1 ST, V2 J-point amplitude) match the univariate effect-size screen almost exactly, and 5 of the top 10 SHAP features are in leads V1-V3.
