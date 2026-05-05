@@ -67,3 +67,7 @@ python make_figures.py --data-dir ../data --out-dir ../figures
 - 100 Hz sampling is coarse for fine J-point/QRS morphology.
 - Labels are diagnostic, not per-beat — caps achievable sensitivity on a resting ECG alone.
 - **This is a research baseline, not a validated diagnostic tool.**
+
+## Citation
+
+If you use this code or the accompanying paper, please cite the manuscript in `paper/` and the underlying [Brugada-HUCA](https://physionet.org) dataset (PhysioNet v1.0.0, Feb 2026).
