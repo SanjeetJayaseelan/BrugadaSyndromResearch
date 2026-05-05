@@ -47,3 +47,15 @@ SHAP attribution's top-3 features (V2 ST, V1 ST, V2 J-point amplitude) match the
 ## Error analysis
 
 Sensitivity is **62% (33/53)** when the patient's baseline ECG is non-pathological vs. **83% (19/23)** when it is overtly abnormal. Missed BrS cases sit at an intermediate V2 ST amplitude (0.174 mV) between controls (0.119 mV) and correctly caught cases (0.252 mV) — the model's failures concentrate on the same concealed phenotype that motivates sodium-channel-blocker provocation testing in clinical practice.
+
+## Reproducing this work
+
+```bash
+pip install -r requirements.txt
+
+cd src
+python feature_extraction.py --input ../data/preprocessed.npz --output ../data/features_reproduced.csv
+python train_model.py --features ../data/features.csv --out ../data/cv_metrics_reproduced.csv
+python shap_explain.py --features ../data/features.csv --out-dir ../data/
+python make_figures.py --data-dir ../data --out-dir ../figures
+```
