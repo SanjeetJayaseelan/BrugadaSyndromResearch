@@ -71,3 +71,11 @@ python make_figures.py --data-dir ../data --out-dir ../figures
 ## Citation
 
 If you use this code or the accompanying paper, please cite the manuscript in `paper/` and the underlying [Brugada-HUCA](https://physionet.org) dataset (PhysioNet v1.0.0, Feb 2026).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+## Contact
+
+Sanjeet — sanjeet.jaysee@gmail.com
