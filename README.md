@@ -59,3 +59,11 @@ python train_model.py --features ../data/features.csv --out ../data/cv_metrics_r
 python shap_explain.py --features ../data/features.csv --out-dir ../data/
 python make_figures.py --data-dir ../data --out-dir ../figures
 ```
+
+## Limitations
+
+- Single-center, single-dataset — no external validation cohort.
+- Small sample (76 BrS, only 7 type-2) — wide confidence intervals.
+- 100 Hz sampling is coarse for fine J-point/QRS morphology.
+- Labels are diagnostic, not per-beat — caps achievable sensitivity on a resting ECG alone.
+- **This is a research baseline, not a validated diagnostic tool.**
