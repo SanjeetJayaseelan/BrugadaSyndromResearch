@@ -3,3 +3,7 @@ __pycache__/
 .DS_Store
 *.egg-info/
 .ipynb_checkpoints/
+*.npy
+.env
+build/
+dist/
