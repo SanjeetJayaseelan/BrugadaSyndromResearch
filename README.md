@@ -93,3 +93,7 @@ MIT — see [LICENSE](LICENSE).
 ## Contact
 
 Sanjeet — sanjeet.jaysee@gmail.com
+
+## Acknowledgments
+
+Thanks to Hospital Universitario Central de Asturias for releasing the Brugada-HUCA dataset on PhysioNet, and to the authors of prior BrS-AI work cited in the paper for the context that made this project possible to situate honestly.
