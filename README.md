@@ -1,5 +1,7 @@
 # Brugada Syndrome ECG Classifier
 
+![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![License](https://img.shields.io/badge/license-MIT-green)
+
 An interpretable machine-learning classifier for Brugada syndrome (BrS) on the Brugada-HUCA 12-lead ECG dataset — the code behind [this paper](paper/Brugada_Syndrome_ECG_Classifier_Paper.pdf).
 
 > Independent research project. Not a diagnostic device — see Limitations.
