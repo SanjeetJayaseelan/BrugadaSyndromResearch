@@ -21,7 +21,8 @@ from sklearn.ensemble import RandomForestClassifier
 import xgboost as xgb
 
 
-def run_cv(X, y, model_name, n_splits=5, n_repeats=10, seed=42):
+def run_cv(X: 'np.ndarray', y: 'np.ndarray', model_name: str,
+           n_splits: int = 5, n_repeats: int = 10, seed: int = 42):
     rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=seed)
     n_pos, n_neg = y.sum(), len(y) - y.sum()
     spw = n_neg / n_pos
