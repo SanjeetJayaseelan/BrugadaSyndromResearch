@@ -1,0 +1,4 @@
+*.csv diff=csv
+*.png binary
+*.npz binary
+*.pdf binary
