@@ -16,7 +16,15 @@ FS = 100.0  # Hz
 
 
 def median_beat(signal, rpeaks, pre_samples=30, post_samples=70):
-    """Align all beats on their R-peak and take the per-sample median."""
+    """Align all beats on their R-peak and take the per-sample median.
+
+    Parameters
+    ----------
+    signal : 1D np.ndarray
+        Filtered single-lead ECG.
+    rpeaks : 1D np.ndarray of int
+        Sample indices of detected R-peaks.
+    """
     beats = []
     for r in rpeaks:
         lo, hi = r - pre_samples, r + post_samples
