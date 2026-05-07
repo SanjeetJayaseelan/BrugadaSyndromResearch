@@ -17,6 +17,7 @@ import shap
 
 
 def main():
+    """CLI entrypoint: fit XGBoost on the full dataset and rank features by SHAP."""
     ap = argparse.ArgumentParser()
     ap.add_argument("--features", default="../data/features.csv")
     ap.add_argument("--out-dir", default="../data/")
