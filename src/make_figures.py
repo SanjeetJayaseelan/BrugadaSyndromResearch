@@ -22,6 +22,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# consistent spine styling across all panels (top/right hidden for a cleaner look)
+
 
 
 
