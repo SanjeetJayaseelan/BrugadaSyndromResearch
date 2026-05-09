@@ -316,6 +316,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--data-dir", default="../data")
     ap.add_argument("--out-dir", default="../figures")
+    ap.add_argument("--brs-pid", type=int, default=188981, help="Example BrS patient_id for fig1/fig2")
+    ap.add_argument("--ctrl-pid", type=int, default=251972, help="Example control patient_id for fig1/fig2")
     args = ap.parse_args()
 
     fig1_waveforms(args.data_dir, args.out_dir)
