@@ -64,7 +64,7 @@ def extract_lead_features(beat, pre_samples=30, fs=FS):
     if j_idx is None:
         j_idx = min(len(beat) - 1, search_start + int(round(60 / dt_ms)))
 
-    j_amp = beat[j_idx]
+    j_amp = beat[j_idx]  # J-point amplitude relative to the pre-QRS baseline
 
     # QRS onset: last point before the R-peak where the beat departs from baseline
     q_idx = r_idx
