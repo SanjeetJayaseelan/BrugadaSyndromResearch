@@ -61,6 +61,7 @@ def run_cv(X: 'np.ndarray', y: 'np.ndarray', model_name: str,
         accs.append((tp + tn) / len(te))
 
         # sensitivity at fixed 90% specificity
+        # coarse grid search is fine here — only need the operating point, not a full curve
         thresholds = np.linspace(0, 1, 500)
         best = 0.0
         for t in thresholds:
