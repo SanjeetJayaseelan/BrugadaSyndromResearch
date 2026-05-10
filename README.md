@@ -104,3 +104,7 @@ Thanks to Hospital Universitario Central de Asturias for releasing the Brugada-H
 pip install -r requirements.txt
 pytest tests/ -q
 ```
+
+## Related work cited in the paper
+
+Melo et al. 2023 (PNAS Nexus), Zanchi et al. 2023 (Europace), and Ronan et al. 2025 (Sci Rep) — see `paper/` for full citations. This repo is not a comparison against those; it's the first documented baseline specifically on the Brugada-HUCA dataset.
