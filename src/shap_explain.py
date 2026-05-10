@@ -13,7 +13,8 @@ import argparse
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-import shap
+import shap  # pinned xgboost==1.7.6 in requirements.txt avoids a base_score parsing
+              # incompatibility between newer xgboost JSON models and shap's TreeExplainer
 
 
 def main():
