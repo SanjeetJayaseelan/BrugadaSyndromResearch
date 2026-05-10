@@ -8,3 +8,14 @@ All figures are regenerated directly from `data/` by `src/make_figures.py`.
 4. `fig4_error_analysis.png` — sensitivity by clinical subgroup + V2 ST amplitude by outcome
 5. `fig5_roc_pr_calibration.png` — ROC / precision-recall / calibration over 50 CV folds
 6. `fig6_shap_confusion.png` — SHAP feature attribution + out-of-fold confusion matrix
+
+## Mapping to paper sections
+
+| Figure | Paper section |
+|---|---|
+| fig1 | Section 2, Data |
+| fig2 | Section 3.1, Preprocessing |
+| fig3 | Section 3.2, Feature engineering |
+| fig4 | Section 4.3, Error analysis |
+| fig5 | Section 4.1, Classification performance |
+| fig6 | Section 4.2, Interpretability |
