@@ -95,7 +95,7 @@ def extract_lead_features(beat, pre_samples=30, fs=FS):
     else:
         t_amp = np.nan
 
-    j_to_r_ratio = j_amp / r_amp if abs(r_amp) > 1e-6 else np.nan
+    j_to_r_ratio = j_amp / r_amp if abs(r_amp) > 1e-6 else np.nan  # guard divide-by-zero on flat beats
 
     return {
         "J_amp": j_amp, "ST40": st40, "ST80": st80, "ST_slope": st_slope,
