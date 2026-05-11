@@ -23,3 +23,7 @@ Each of the 12 leads contributes 9 columns named `<LEAD>_<feature>`:
 | `QRS_dur` | QRS duration, ms |
 | `T_amp` | signed T-wave amplitude, mV |
 | `J_to_R_ratio` | J-point amplitude divided by R amplitude |
+
+---
+
+All CSVs here are UTF-8, comma-delimited, one row per patient (except `error_analysis.csv`, one row per misclassified patient).
