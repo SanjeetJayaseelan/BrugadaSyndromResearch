@@ -250,10 +250,34 @@ def fig5_roc_pr_calibration(data_dir, out_dir):
     plt.close(fig)
     return mean_auc, mean_ap
 
-def fig6_shap_confusion(data_dir, out_dir, confusion=(272, 15, 24, 52)):
-    """confusion = (TN, FP, FN, TP), taken from data/error_analysis.csv."""
+def confusion_from_errors(data_dir):
+    """Out-of-fold confusion matrix (TN, FP, FN, TP), computed live.
+
+    error_analysis.csv lists every misclassified patient (FN/FP); the two
+    correct cells follow from the label totals in features.csv. Deriving this
+    here means the figure can never silently drift from the underlying data the
+    way a hardcoded matrix would if the model or dataset changes.
+    """
+    feat = pd.read_csv(f"{data_dir}/features.csv")
+    err = pd.read_csv(f"{data_dir}/error_analysis.csv")
+    n_pos = int((feat["label"] == 1).sum())
+    n_neg = int((feat["label"] == 0).sum())
+    fn = int((err["error"] == "FN").sum())
+    fp = int((err["error"] == "FP").sum())
+    return n_neg - fp, fp, fn, n_pos - fn  # TN, FP, FN, TP
+
+
+def fig6_shap_confusion(data_dir, out_dir, confusion=None):
+    """SHAP attribution + confusion matrix.
+
+    `confusion` is (TN, FP, FN, TP); when None (the default) it is derived live
+    from error_analysis.csv + features.csv via confusion_from_errors().
+    """
     import xgboost as xgb
     import shap
+
+    if confusion is None:
+        confusion = confusion_from_errors(data_dir)
 
     feat = pd.read_csv(f"{data_dir}/features.csv")
     X = feat.drop(columns=["patient_id", "label", "brugada_code"])
