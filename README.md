@@ -44,9 +44,9 @@ paper/                    the manuscript PDF
 1. Band-pass filter each lead (0.5-40Hz) and detect R-peaks.
 2. Build a robust per-lead **median beat** (align on R-peak, take per-sample median).
 3. Extract 9 features per lead (J-point, ST40/ST80, ST slope, R/S amplitude, QRS duration, T amplitude, J-to-R ratio) x 12 leads + 3 rhythm features = **111 features**.
-4. Screen features with Cohen's *d* / Mann-Whitney U (Bonferroni-corrected) before modeling.
-5. Train XGBoost (primary) and Random Forest (comparator) under **repeated stratified 5-fold CV, 10 repeats (50 folds)** — patient-level and leakage-free by construction.
-6. Explain the fitted model with SHAP; tie errors to the `basal_pattern` clinical flag.
+4. Compute a **descriptive** univariate screen (Cohen's *d* / Mann-Whitney U, Bonferroni-corrected) with `compute_effect_sizes.py`. This is for interpretation and figures only — it is **not** feature selection: the models train on all 111 features, so nothing here can leak into the cross-validated numbers.
+5. Train XGBoost (primary) and Random Forest (comparator) under **repeated stratified 5-fold CV, 10 repeats (50 folds)** — patient-level and leakage-free by construction (one ECG per patient).
+6. Explain the model with SHAP — refit once on the **full** labeled set for interpretation only, kept separate from the held-out-fold performance above — and tie errors to the `basal_pattern` clinical flag.
 
 ## Results
 
@@ -54,13 +54,15 @@ paper/                    the manuscript PDF
 |---|---|---|
 | AUROC | 0.900 [0.80, 0.97] | 0.910 [0.84, 0.97] |
 | AUPRC | 0.777 [0.57, 0.92] | 0.789 [0.64, 0.91] |
-| Sensitivity @ 90% specificity | **0.763** | 0.751 |
+| Sensitivity @ 90% specificity | **0.763 [0.53, 0.94]** | 0.751 [0.53, 0.93] |
 
-SHAP attribution's top-3 features (V2 ST, V1 ST, V2 J-point amplitude) match the univariate effect-size screen almost exactly, and 5 of the top 10 SHAP features are in leads V1-V3.
+Brackets are 2.5–97.5 percentiles across the 50 CV folds. The sensitivity-at-90%-specificity interval is wide because it is an operating-point estimate on a small positive class — treat the point estimate accordingly.
+
+SHAP attribution's top-3 features (V2 ST, V1 ST, V2 J-point amplitude) match the univariate effect-size screen almost exactly, and 5 of the top 10 SHAP features are in leads V1-V3. The SHAP model is refit on the full labeled set (standard for interpretation); it is not the source of the cross-validated numbers above, which come only from held-out folds.
 
 ## Error analysis
 
-Sensitivity is **62% (33/53)** when the patient's baseline ECG is non-pathological vs. **83% (19/23)** when it is overtly abnormal. Missed BrS cases sit at an intermediate V2 ST amplitude (0.174 mV) between controls (0.119 mV) and correctly caught cases (0.252 mV) — the model's failures concentrate on the same concealed phenotype that motivates sodium-channel-blocker provocation testing in clinical practice.
+Out-of-fold sensitivity is **62% (33/53, 95% CI 49–74%)** when the patient's baseline ECG is non-pathological vs. **83% (19/23, 95% CI 63–93%)** when it is overtly abnormal (Wilson intervals; overall **68%, 52/76, 95% CI 57–78%**). The subgroups are small, so these intervals are wide and overlapping — read the split as directional, not as a precise effect size. Missed BrS cases sit at an intermediate V2 ST amplitude (0.174 mV) between controls (0.119 mV) and correctly caught cases (0.252 mV) — the model's failures concentrate on the same concealed phenotype that motivates sodium-channel-blocker provocation testing in clinical practice.
 
 ## Reproducing this work
 
@@ -68,11 +70,17 @@ Sensitivity is **62% (33/53)** when the patient's baseline ECG is non-pathologic
 pip install -r requirements.txt
 
 cd src
+# 0.5-40Hz filter + R-peak detection: brugada_raw.npz -> preprocessed.npz
+python preprocess_raw.py --input ../data/brugada_raw.npz --output ../data/preprocessed_reproduced.npz --validate-against ../data/preprocessed.npz
 python feature_extraction.py --input ../data/preprocessed.npz --output ../data/features_reproduced.csv
+# descriptive univariate screen (interpretation/figures only, not feature selection)
+python compute_effect_sizes.py --features ../data/features.csv --output ../data/feature_effect_sizes_reproduced.csv
 python train_model.py --features ../data/features.csv --out ../data/cv_metrics_reproduced.csv
 python shap_explain.py --features ../data/features.csv --out-dir ../data/
 python make_figures.py --data-dir ../data --out-dir ../figures
 ```
+
+**Checkpoints vs. raw download.** The pipeline starts from two provided checkpoints, `data/brugada_raw.npz` (raw signal) and `data/preprocessed.npz` (filtered + R-peaks). The upstream step that reads PhysioNet's raw WFDB `.dat`/`.hea` records and assembles `brugada_raw.npz` needs the PhysioNet download and is not scripted here; everything from `brugada_raw.npz` onward is reproducible with the commands above.
 
 ## Limitations
 
@@ -107,7 +115,7 @@ pytest tests/ -q
 
 ## Related work cited in the paper
 
-Melo et al. 2023 (PNAS Nexus), Zanchi et al. 2023 (Europace), and Ronan et al. 2025 (Sci Rep) — see `paper/` for full citations. This repo is not a comparison against those; it's the first documented baseline specifically on the Brugada-HUCA dataset.
+Melo et al. 2023 (PNAS Nexus), Zanchi et al. 2023 (Europace), and Ronan et al. 2025 (Sci Rep) — see `paper/` for full citations. This repo is not a head-to-head comparison against those; it's an independent, interpretable feature-based baseline on the Brugada-HUCA dataset. Brugada-HUCA is also the ECG track of the International Data Science Challenge 2026, so other public baselines on this data exist — the aim here is transparency and clinical interpretability, not a novelty or leaderboard claim.
 
 ---
 
